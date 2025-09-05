@@ -1,0 +1,63 @@
+<div class="devices-container">
+    @for (device of deviceCards | async; track device.UDID) {
+    <div class="device-card-iphone">
+        <div class="device-header">
+            <div class="device-udid">
+                {{ device.Container.Info.UniqueDeviceID }}
+            </div>
+            <div class="wda-status">
+                <span *ngIf="deviceStatus[device.Container.Info.UniqueDeviceID]"
+                    (click)="stopWda(device.Container.Info.UniqueDeviceID)" class="lamp lamp-green"></span>
+                <span *ngIf="!deviceStatus[device.Container.Info.UniqueDeviceID]"
+                    (click)="startWda(device.Container.Info.UniqueDeviceID)" class="lamp lamp-red"></span>
+            </div>
+        </div>
+        <div class="device-panel2">
+            <mat-form-field class="full-width">
+                <mat-label>Действие</mat-label>
+                <mat-select [(value)]="selectedAction">
+                    <mat-option *ngFor="let action of actions" [value]="action.value">
+                        {{ action.label }}
+                    </mat-option>
+                </mat-select>
+            </mat-form-field>
+
+            <div class="action-row">
+                <ng-container [ngSwitch]="selectedAction">
+                    <div *ngSwitchCase="'install'" class="flex-grow">
+                        <label class="file-label">
+                            <button mat-stroked-button color="accent" type="button" (click)="fileInput.click()">
+                                <mat-icon>attach_file</mat-icon>
+                                <span>Файл</span>
+                            </button>
+                            <input #fileInput type="file" (change)="onFileSelected($event)" hidden>
+                            <span class="file-name" *ngIf="fileName">{{ fileName }}</span>
+                        </label>
+                    </div>
+                    <div *ngSwitchDefault class="flex-grow">
+                        <mat-form-field appearance="outline" class="full-width">
+                            <mat-label>Bundle ID</mat-label>
+                            <input matInput [(ngModel)]="bundleId" placeholder="Введите Bundle ID">
+                        </mat-form-field>
+                    </div>
+                </ng-container>
+
+                <button mat-icon-button color="primary" class="go-btn" (click)="onGo(device.Container.Info.UniqueDeviceID)">
+                    <mat-icon>play_arrow</mat-icon>
+                </button>
+            </div>
+        </div>
+        <div class="iphone18_5">
+            <div class="iphone-speaker"></div>
+            <div class="iphone-screen">
+                <div class="stream-wrapper">
+                    <img [src]="getStreamUrl(device.Container.Info.UniqueDeviceID)" #imgEl alt="Stream"
+                        (click)="onImageClick(device.Container.Info.UniqueDeviceID, $event,imgEl)" />
+                </div>
+            </div>
+            <div class="iphone-home"></div>
+        </div>
+    </div>
+
+    }
+</div>

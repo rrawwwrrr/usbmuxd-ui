@@ -1,0 +1,108 @@
+.devices-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 32px;
+  justify-content: flex-start;
+}
+
+.device-card-iphone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.device-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  margin-bottom: 12px;
+  max-width: 270px;
+}
+
+.device-udid {
+  font-size: 13px;
+  color: #666;
+  text-align: center;
+  word-break: break-all;
+}
+
+.wda-status {
+  display: flex;
+  align-items: center;
+}
+
+.lamp {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-right: 6px;
+  border: 1px solid #888;
+  vertical-align: middle;
+  cursor: pointer;
+}
+.lamp-green {
+  background: #4caf50;
+  box-shadow: 0 0 6px #4caf50;
+}
+.lamp-red {
+  background: #e53935;
+  box-shadow: 0 0 6px #e53935;
+}
+
+.stream-wrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+}
+
+.iphone18_5 {
+  background: #222;
+  border-radius: 28px;
+  border: 3px solid #888;
+  padding: 8px 2px 10px 2px; /* минимальные отступы сверху и снизу */
+  box-shadow: 0 4px 16px #0002;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  width: 252px;
+  min-height: 500px;
+}
+
+.iphone18_5 .iphone-speaker {
+  width: 44px;
+  height: 5px;
+  background: #444;
+  border-radius: 3px;
+  margin: 0 auto 6px auto;
+}
+
+.iphone18_5 .iphone-screen {
+  background: #fff;
+  border-radius: 0;
+  box-shadow: 0 0 0 1px #1111 inset;
+  width: 240px;
+  height: 430px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  position: relative;
+  overflow: hidden;
+}
+.iphone18_5 .iphone-home {
+  position: absolute;
+  left: 0; right: 0; bottom: 6px;
+  margin: auto;
+  width: 30px;
+  height: 30px;
+  background: #fafafa;
+  border: 1.5px solid #bbb;
+  border-radius: 50%;
+  box-shadow: 0 1px 2px #0001;
+}
+
