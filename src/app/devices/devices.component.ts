@@ -13,7 +13,6 @@ import { FormsModule } from '@angular/forms';
 
 @Component({
     selector: 'app-device-control',
-    standalone: true,
     templateUrl: './devices.component.html',
     styleUrls: ['./devices.component.scss'],
     imports: [AsyncPipe, NgIf, NgFor,
@@ -25,8 +24,7 @@ import { FormsModule } from '@angular/forms';
         MatIconButton,
         MatIconModule,
         FormsModule,
-    ],
-
+    ]
 })
 export class DevicesComponent implements OnInit {
     deviceCards: Observable<DeviceData[]>;
