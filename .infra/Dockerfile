@@ -9,6 +9,6 @@ RUN npm run build
 FROM nginx:alpine
 RUN rm -rf /usr/share/nginx/html/*
 RUN rm -rf /etc/nginx/conf.d/*
-COPY --from=build /app/dist/browser /usr/share/nginx/html
+COPY --from=build /app/dist/ios-ui/browser /usr/share/nginx/html
 COPY ./.infra/nginx.conf /etc/nginx/conf.d/default.conf
 CMD ["nginx", "-g", "daemon off;"]
