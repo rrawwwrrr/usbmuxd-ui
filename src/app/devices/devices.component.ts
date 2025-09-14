@@ -10,6 +10,7 @@ import { MatButtonModule, MatIconButton } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 
 import { FormsModule } from '@angular/forms';
+import { WebSocketMessage, WebSocketService } from '../service/websocket.service';
 
 @Component({
     selector: 'app-device-control',
@@ -34,6 +35,8 @@ export class DevicesComponent implements OnInit {
     deviceStatus: { [id: string]: boolean } = {};
     sessions: { [id: string]: DeviceSession } = {};
     intervalId: any;
+    isConnected = false;
+    wsUrl = 'ws://ios.rrawww.ru/ws';
     actions = [
         { value: 'install', label: 'Установить' },
         { value: 'start', label: 'Запустить' },
@@ -45,7 +48,7 @@ export class DevicesComponent implements OnInit {
     bundleId = '';
     @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
 
-    constructor(private deviceApiService: DeviceApiService) {
+    constructor(private deviceApiService: DeviceApiService, private webSocketService: WebSocketService) {
         // this.sessions['00008030-001454190EEB802E'] = {
         //     id: "5C2CF09F-269A-42E9-AFE8-E35BB72DD4AC",
         //     width: 375,
@@ -57,6 +60,13 @@ export class DevicesComponent implements OnInit {
                     this.devices = devices;
                     return devices;
                 }))
+
+        const messageSub = this.webSocketService.messages$.subscribe(
+            (message: WebSocketMessage) => {
+                console.log('Received message:', message);
+            }
+        );
+        this.connect();
     }
 
 
@@ -207,5 +217,17 @@ export class DevicesComponent implements OnInit {
                 this.deviceApiService.deleteApp(udid, bundleId).subscribe()
             }
         }
+    }
+
+
+    connect() {
+        // Замените на ваш WebSocket URL
+        this.webSocketService.connect(this.wsUrl);
+        this.isConnected = true;
+    }
+
+    disconnect() {
+        this.webSocketService.disconnect();
+        this.isConnected = false;
     }
 }
