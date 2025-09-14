@@ -1,8 +1,8 @@
 // device-api.service.ts
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable, catchError, map, of } from 'rxjs';
-import { DeviceData } from '../model/device';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Observable, catchError, delay, map, of, retryWhen, take } from 'rxjs';
+import { DeviceData, WdaStatus } from '../model/device';
 
 @Injectable({ providedIn: 'root' })
 export class DeviceApiService {
@@ -25,6 +25,9 @@ export class DeviceApiService {
 
     getScreenStreamUrl(udid: string): string {
         return `${this.baseDeviceUrl}/${udid}/screenstream`;
+    }
+    getScreenWdaStreamUrl(udid: string): string {
+        return `${this.baseDeviceUrl}/${udid}/wda/stream`;
     }
 
     installApp(udid: string, file: File): Observable<any> {
@@ -88,12 +91,24 @@ export class DeviceApiService {
         );
     }
 
-    createWdaSession(udid: string, capabilities: any) {
+    getWdaSession(udid: string) {
+        this.http.get<WdaStatus>(`/api/v1/wda/${udid}/session`);
+    }
+
+    createWdaSession(udid: string) {
+        const capabilities = {
+            browserName: 'chrome',
+            version: 'latest',
+            platform: 'MAC'
+        };
         console.log("создаем сессию")
-        console.log(capabilities)
-        return this.http.post(
-            `/api/v1/wda/${udid}/session`,
-            { capabilities }
+        console.log({ capabilities })
+
+        return this.http.post(`/api/v1/wda/${udid}/session`, { capabilities }).pipe(
+            retryWhen(errors => errors.pipe(
+                delay(1000), // Задержка перед повторной попыткой, например, 1 секунда
+                take(3) // Количество попыток, например, 3
+            ))
         );
     }
 

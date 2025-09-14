@@ -85,16 +85,25 @@ export interface Container {
     ID: string;
     Name: string;
     UsbPath: string;
-    Info: ContainerInfo;
 }
 
 export interface DeviceData {
     UDID: string;
     LastSeen: string;
     Container: Container;
+    Info: ContainerInfo;
+    WDA: WdaStatus;
 }
 export interface DeviceSession {
     id: string;
     width: number;
     height: number;
 }
+
+export interface WdaStatus {
+    sessionId: string;
+    detail: string;
+    status: string;
+    value: any
+}
+

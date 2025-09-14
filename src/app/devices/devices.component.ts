@@ -1,6 +1,6 @@
 import { AsyncPipe, CommonModule, NgFor, NgIf } from '@angular/common';
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
-import { Observable } from 'rxjs';
+import { map, Observable, tap } from 'rxjs';
 import { DeviceData, DeviceSession } from '../model/device';
 import { DeviceApiService } from '../service/device.service';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -15,7 +15,9 @@ import { FormsModule } from '@angular/forms';
     selector: 'app-device-control',
     templateUrl: './devices.component.html',
     styleUrls: ['./devices.component.scss'],
-    imports: [AsyncPipe, NgIf, NgFor,
+    standalone: true,
+    imports: [
+        AsyncPipe,
         CommonModule,
         MatFormFieldModule,
         MatInputModule,
@@ -27,6 +29,7 @@ import { FormsModule } from '@angular/forms';
     ]
 })
 export class DevicesComponent implements OnInit {
+    devices: DeviceData[] = [];
     deviceCards: Observable<DeviceData[]>;
     deviceStatus: { [id: string]: boolean } = {};
     sessions: { [id: string]: DeviceSession } = {};
@@ -43,21 +46,26 @@ export class DevicesComponent implements OnInit {
     @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
 
     constructor(private deviceApiService: DeviceApiService) {
-        this.sessions['00008030-001454190EEB802E'] = {
-            id: "03D95C77-F828-4B1B-967F-DAF2576F0E80",
-            width: 375,
-            height: 667,
-        }
+        // this.sessions['00008030-001454190EEB802E'] = {
+        //     id: "5C2CF09F-269A-42E9-AFE8-E35BB72DD4AC",
+        //     width: 375,
+        //     height: 667,
+        // }
         this.deviceCards = this.deviceApiService.getDevices()
+            .pipe(
+                map(devices => {
+                    this.devices = devices;
+                    return devices;
+                }))
     }
 
 
     ngOnInit() {
-        this.updateAllWdaStatuses();
-        this.intervalId = setInterval(() => {
-            console.log(this.deviceStatus)
-            this.updateAllWdaStatuses();
-        }, 5000);
+        // this.updateAllWdaStatuses();
+        // this.intervalId = setInterval(() => {
+        //     console.log(this.deviceStatus)
+        //     this.updateAllWdaStatuses();
+        // }, 5000);
     }
 
     ngOnDestroy() {
@@ -86,47 +94,40 @@ export class DevicesComponent implements OnInit {
     // }
 
     startWda(udid: string): void {
-        // Логика запуска WDA
         console.log('Запуск WDA для устройства:', udid);
-        this.deviceApiService.startWdaSession(udid).subscribe(
-
-            () => {
-                this.createSession(udid);
+        this.deviceApiService.startWdaSession(udid).subscribe({
+            next: res => {
+                this.createSession(udid).subscribe();
                 this.deviceStatus[udid] = true
+            },
+            error: err => {
+                console.error('Ошибка запуска WDA :', err);
             }
+        }
         )
     }
     stopWda(udid: string): void {
-        // Логика остановки WDA
         console.log('Запуск WDA для устройства:', udid);
         this.deviceApiService.stopWdaSession(udid).subscribe(
             () => this.deviceStatus[udid] = false
         )
     }
 
-    getStreamUrl(udid: string) {
-        return this.deviceApiService.getScreenStreamUrl(udid);
+    getStreamUrl(device: DeviceData) {
+        const udid = device.Info.UniqueDeviceID;
+        return this.checkWdaFromDevice(device)
+            ? this.deviceApiService.getScreenWdaStreamUrl(udid)
+            : this.deviceApiService.getScreenStreamUrl(udid);
     }
 
     createSession(udid: string) {
-        const capabilities = {
-            browserName: 'chrome',
-            version: 'latest',
-            platform: 'MAC'
-        };
-
-        this.deviceApiService.createWdaSession(udid, capabilities)
-            .subscribe({
-                next: res => {
+        return this.deviceApiService.createWdaSession(udid).
+            pipe(tap(
+                res => {
                     console.log('Сессия создана:', res);
                     this.sessions[udid] = { id: res as string, width: 0, height: 0 }
-                    // Можно обновить статус, если нужно
-                    // this.updateWdaStatus(udid);
-                },
-                error: err => {
-                    console.error('Ошибка создания сессии:', err);
                 }
-            });
+            ));
     }
 
     updateWdaStatus(deviceId: string) {
@@ -138,7 +139,7 @@ export class DevicesComponent implements OnInit {
     updateAllWdaStatuses() {
         this.deviceApiService.getDevices().subscribe((devices: DeviceData[]) => {
             for (const device of devices) {
-                this.updateWdaStatus(device.Container.Info.UniqueDeviceID);
+                this.updateWdaStatus(device.Info.UniqueDeviceID);
             }
         });
     }
@@ -154,7 +155,6 @@ export class DevicesComponent implements OnInit {
         const x = event.clientX - rect.left;
         const y = event.clientY - rect.top;
 
-        // Переводим координаты клика в координаты экрана устройства:
         const realX = x * (session.width / rect.width);
         const realY = y * (session.height / rect.height);
 
@@ -168,7 +168,9 @@ export class DevicesComponent implements OnInit {
         const file = event.target.files[0];
         this.fileName = file ? file.name : '';
     }
-
+    checkWdaFromDevice(device: DeviceData) {
+        return device.WDA.status === 'created';
+    }
 
     onGo(udid: string) {
         if (this.selectedAction === 'install') {
@@ -190,21 +192,20 @@ export class DevicesComponent implements OnInit {
                 alert('Введите Bundle ID!');
                 return;
             }
+            const bundleId = this.bundleId.replaceAll("x5.", "lanit.")
             if ((this.selectedAction === 'start')) {
                 // Здесь ваша логика для работы с Bundle ID
                 console.log('Запускаем:', this.bundleId);
-                this.deviceApiService.startApp(udid, this.bundleId).subscribe()
+                this.deviceApiService.startApp(udid, bundleId).subscribe()
             } else if ((this.selectedAction === 'stop')) {
                 // Здесь ваша логика для работы с Bundle ID
                 console.log('Запускаем:', this.bundleId);
-                this.deviceApiService.stopApp(udid, this.bundleId).subscribe()
-            }else if ((this.selectedAction === 'delete')) {
+                this.deviceApiService.stopApp(udid, bundleId).subscribe()
+            } else if ((this.selectedAction === 'delete')) {
                 // Здесь ваша логика для работы с Bundle ID
                 console.log('Запускаем:', this.bundleId);
-                this.deviceApiService.deleteApp(udid, this.bundleId).subscribe()
+                this.deviceApiService.deleteApp(udid, bundleId).subscribe()
             }
-            // Например:
-            // this.deviceService.doSomethingWithBundleId(this.bundleId).subscribe(...)
         }
     }
 }

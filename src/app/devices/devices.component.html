@@ -3,13 +3,13 @@
     <div class="device-card-iphone">
         <div class="device-header">
             <div class="device-udid">
-                {{ device.Container.Info.UniqueDeviceID }}
+                {{ device.Info.UniqueDeviceID }}
             </div>
             <div class="wda-status">
-                <span *ngIf="deviceStatus[device.Container.Info.UniqueDeviceID]"
-                    (click)="stopWda(device.Container.Info.UniqueDeviceID)" class="lamp lamp-green"></span>
-                <span *ngIf="!deviceStatus[device.Container.Info.UniqueDeviceID]"
-                    (click)="startWda(device.Container.Info.UniqueDeviceID)" class="lamp lamp-red"></span>
+                <span *ngIf="checkWdaFromDevice(device)"
+                    (click)="stopWda(device.Info.UniqueDeviceID)" class="lamp lamp-green"></span>
+                <span *ngIf="!checkWdaFromDevice(device)"
+                    (click)="startWda(device.Info.UniqueDeviceID)" class="lamp lamp-red"></span>
             </div>
         </div>
         <div class="device-panel2">
@@ -37,12 +37,12 @@
                     <div *ngSwitchDefault class="flex-grow">
                         <mat-form-field appearance="outline" class="full-width">
                             <mat-label>Bundle ID</mat-label>
-                            <input matInput [(ngModel)]="bundleId" placeholder="Введите Bundle ID">
+                            <input matInput [(ngModel)]="bundleId" placeholder="Bundle ID">
                         </mat-form-field>
                     </div>
                 </ng-container>
 
-                <button mat-icon-button color="primary" class="go-btn" (click)="onGo(device.Container.Info.UniqueDeviceID)">
+                <button mat-icon-button color="primary" class="go-btn" (click)="onGo(device.Info.UniqueDeviceID)">
                     <mat-icon>play_arrow</mat-icon>
                 </button>
             </div>
@@ -51,8 +51,8 @@
             <div class="iphone-speaker"></div>
             <div class="iphone-screen">
                 <div class="stream-wrapper">
-                    <img [src]="getStreamUrl(device.Container.Info.UniqueDeviceID)" #imgEl alt="Stream"
-                        (click)="onImageClick(device.Container.Info.UniqueDeviceID, $event,imgEl)" />
+                    <img [src]="getStreamUrl(device)" #imgEl alt="Stream"
+                        (click)="onImageClick(device.Info.UniqueDeviceID, $event,imgEl)" />
                 </div>
             </div>
             <div class="iphone-home"></div>
