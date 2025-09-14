@@ -13,7 +13,7 @@ export class DeviceApiService {
     constructor(private http: HttpClient) { }
 
     getDevices(): Observable<DeviceData[]> {
-        return this.http.get<DeviceData[]>(`/devices`);
+        return this.http.get<DeviceData[]>(`${this.baseUrl}/devices`);
     }
 
     startWdaSession(udid: string): Observable<any> {
