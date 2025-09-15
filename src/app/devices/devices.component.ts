@@ -1,7 +1,7 @@
 import { AsyncPipe, CommonModule, NgFor, NgIf } from '@angular/common';
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { map, Observable, tap } from 'rxjs';
-import { DeviceData, DeviceSession } from '../model/device';
+import { DeviceData, DeviceSession, WdaStatus } from '../model/device';
 import { DeviceApiService } from '../service/device.service';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -63,7 +63,13 @@ export class DevicesComponent implements OnInit {
 
         const messageSub = this.webSocketService.messages$.subscribe(
             (message: WebSocketMessage) => {
-                console.log('Received message:', message);
+                if (message.type === "wda_status") {
+                    const udid = message.data['udid'];
+                    const device = this.devices.find(val => val.Info.UniqueDeviceID === udid);
+                    if (device) {
+                        device.WDA = message.data.status as WdaStatus;
+                    }
+                }
             }
         );
         this.connect();
