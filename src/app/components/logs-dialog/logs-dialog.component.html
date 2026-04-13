@@ -1,0 +1,77 @@
+<h2 mat-dialog-title class="dialog-title">
+  <mat-icon class="title-icon">terminal</mat-icon>
+  Логи — {{ data.device.Info.model || data.device.Info.DeviceName || data.device.serial }}
+  <span class="serial-hint">{{ data.device.serial }}</span>
+</h2>
+
+<mat-dialog-content class="dialog-content">
+  <mat-tab-group class="logs-tabs" animationDuration="150ms">
+
+    <!-- Container Logs Tab -->
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="tab-icon">dns</mat-icon>
+        Контейнер
+      </ng-template>
+      <div class="log-toolbar">
+        @if (containerLogsError()) {
+          <span class="error-hint">{{ containerLogsError() }}</span>
+        }
+        <span class="spacer"></span>
+        <button mat-icon-button matTooltip="Очистить" (click)="clearContainerLogs()">
+          <mat-icon>clear_all</mat-icon>
+        </button>
+        <button mat-icon-button [matTooltip]="autoScroll() ? 'Автопрокрутка вкл' : 'Автопрокрутка выкл'"
+                [class.active-btn]="autoScroll()" (click)="toggleAutoScroll()">
+          <mat-icon>vertical_align_bottom</mat-icon>
+        </button>
+      </div>
+      <div class="log-output" #containerLogsEl>
+        @for (line of containerLogs(); track $index) {
+          <div class="log-line" [class.log-error]="line.includes('ERROR') || line.includes('error')"
+               [class.log-warn]="line.includes('WARN') || line.includes('warn')"
+               [class.log-info]="line.includes('INFO') || line.includes('info')">{{ line }}</div>
+        }
+        @if (containerLogs().length === 0 && !containerLogsError()) {
+          <div class="log-empty">Ожидание логов...</div>
+        }
+      </div>
+    </mat-tab>
+
+    <!-- Device Logs Tab -->
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="tab-icon">phone_android</mat-icon>
+        Устройство
+      </ng-template>
+      <div class="log-toolbar">
+        @if (deviceLogsError()) {
+          <span class="error-hint">{{ deviceLogsError() }}</span>
+        }
+        <span class="spacer"></span>
+        <button mat-icon-button matTooltip="Очистить" (click)="clearDeviceLogs()">
+          <mat-icon>clear_all</mat-icon>
+        </button>
+        <button mat-icon-button [matTooltip]="autoScroll() ? 'Автопрокрутка вкл' : 'Автопрокрутка выкл'"
+                [class.active-btn]="autoScroll()" (click)="toggleAutoScroll()">
+          <mat-icon>vertical_align_bottom</mat-icon>
+        </button>
+      </div>
+      <div class="log-output" #deviceLogsEl>
+        @for (line of deviceLogs(); track $index) {
+          <div class="log-line" [class.log-error]="line.includes('E/') || line.includes('error')"
+               [class.log-warn]="line.includes('W/') || line.includes('warn')"
+               [class.log-info]="line.includes('I/')">{{ line }}</div>
+        }
+        @if (deviceLogs().length === 0 && !deviceLogsError()) {
+          <div class="log-empty">Ожидание логов устройства...</div>
+        }
+      </div>
+    </mat-tab>
+
+  </mat-tab-group>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="dialogRef.close()">Закрыть</button>
+</mat-dialog-actions>

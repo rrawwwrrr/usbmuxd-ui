@@ -1,0 +1,125 @@
+<div class="screen-wrapper">
+
+  <!-- Left: stream canvas -->
+  <div class="canvas-area">
+
+    <!-- Header inside canvas-area -->
+    <div class="stream-header">
+      <div class="device-info">
+        <mat-icon class="platform-icon" [class.android]="isAndroid" [class.ios]="isIos">
+          {{ isAndroid ? 'android' : 'phone_iphone' }}
+        </mat-icon>
+        <span class="device-name">{{ device.Info?.model || device.Info?.DeviceName || device.serial }}</span>
+        <span class="serial">{{ device.serial }}</span>
+      </div>
+      <div class="stream-meta">
+        @if (connected()) {
+          <span class="fps-badge">{{ fps() }} fps</span>
+          <span class="live-dot"></span>
+        }
+        @if (!connected() && !loading()) {
+          <span class="offline-badge">offline</span>
+        }
+      </div>
+    </div>
+
+    <!-- Canvas container -->
+    <div class="canvas-container" [class.no-interact]="!canInteract">
+      @if (loading()) {
+        <div class="stream-overlay">
+          <mat-spinner diameter="40" />
+          <span>Подключение к стриму...</span>
+        </div>
+      }
+      @if (error() && !loading()) {
+        <div class="stream-overlay error">
+          <mat-icon>signal_disconnected</mat-icon>
+          <span>{{ error() }}</span>
+        </div>
+      }
+
+      <canvas
+        #streamCanvas
+        class="stream-canvas"
+        [class.interactive]="canInteract"
+        [attr.title]="canInteract ? 'Клик — тап, потяни — свайп' : (isIos && !wdaReady() ? 'WDA не готов' : '')"
+        (pointerdown)="onPointerDown($event)"
+        (pointerup)="onPointerUp($event)"
+        (pointercancel)="onPointerCancel()"
+      ></canvas>
+    </div>
+
+    <!-- iOS WDA status -->
+    @if (isIos && !wdaReady() && !loading()) {
+      <div class="wda-hint">
+        <mat-icon>info_outline</mat-icon>
+        WDA сессия недоступна — стрим работает, но тапы не активны
+      </div>
+    }
+  </div>
+
+  <!-- Right: hardware buttons -->
+  <div class="controls-panel">
+
+    <!-- Close button at top -->
+    <button mat-icon-button class="close-btn" matTooltip="Закрыть" (click)="dialogRef.close()">
+      <mat-icon>close</mat-icon>
+    </button>
+
+    <div class="buttons-group">
+
+      <!-- Home -->
+      <button mat-icon-button class="hw-btn home-btn"
+              matTooltip="Домой"
+              [disabled]="!canInteract"
+              (click)="pressHome()">
+        <mat-icon>home</mat-icon>
+      </button>
+
+      <!-- Back (Android only) -->
+      @if (isAndroid) {
+        <button mat-icon-button class="hw-btn"
+                matTooltip="Назад"
+                [disabled]="!canInteract"
+                (click)="pressBack()">
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+
+        <button mat-icon-button class="hw-btn"
+                matTooltip="Последние приложения"
+                [disabled]="!canInteract"
+                (click)="pressMultitask()">
+          <mat-icon>crop_square</mat-icon>
+        </button>
+      }
+
+      <div class="divider"></div>
+
+      <!-- Volume -->
+      <button mat-icon-button class="hw-btn"
+              matTooltip="Громкость +"
+              [disabled]="!canInteract"
+              (click)="volumeUp()">
+        <mat-icon>volume_up</mat-icon>
+      </button>
+
+      <button mat-icon-button class="hw-btn"
+              matTooltip="Громкость -"
+              [disabled]="!canInteract"
+              (click)="volumeDown()">
+        <mat-icon>volume_down</mat-icon>
+      </button>
+
+      <div class="divider"></div>
+
+      <!-- Lock -->
+      <button mat-icon-button class="hw-btn lock-btn"
+              matTooltip="Заблокировать"
+              [disabled]="!canInteract"
+              (click)="pressLock()">
+        <mat-icon>lock</mat-icon>
+      </button>
+    </div>
+  </div>
+
+</div>

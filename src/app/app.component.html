@@ -1,1 +1,24 @@
-<router-outlet />
+<header class="app-header">
+  <div class="header-left">
+    <mat-icon class="logo-icon">hub</mat-icon>
+    <span class="app-title">XFarm Hub</span>
+  </div>
+
+  <div class="header-right">
+    <div class="ws-status" [class.connected]="wsService.connected()" [class.disconnected]="!wsService.connected()"
+         [matTooltip]="wsService.connected() ? 'WebSocket подключён' : 'Переподключение...'">
+      <span class="ws-dot"></span>
+      <span class="ws-label">{{ wsService.connected() ? 'Live' : 'Offline' }}</span>
+    </div>
+
+    @if (wsService.lastUpdate()) {
+      <span class="last-update" [matTooltip]="'Последнее обновление'">
+        {{ wsService.lastUpdate() | date:'HH:mm:ss' }}
+      </span>
+    }
+  </div>
+</header>
+
+<main class="app-main">
+  <router-outlet />
+</main>

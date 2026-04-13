@@ -1,63 +1,167 @@
-<div class="devices-container">
-    @for (device of deviceCards | async; track device.UDID) {
-    <div class="device-card-iphone">
-        <div class="device-header">
-            <div class="device-udid">
-                {{ device.Info.UniqueDeviceID }}
-            </div>
-            <div class="wda-status">
-                <span *ngIf="checkWdaFromDevice(device)"
-                    (click)="stopWda(device.Info.UniqueDeviceID)" class="lamp lamp-green"></span>
-                <span *ngIf="!checkWdaFromDevice(device)"
-                    (click)="startWda(device.Info.UniqueDeviceID)" class="lamp lamp-red"></span>
-            </div>
-        </div>
-        <div class="device-panel2">
-            <mat-form-field class="full-width">
-                <mat-label>Действие</mat-label>
-                <mat-select [(value)]="selectedAction">
-                    <mat-option *ngFor="let action of actions" [value]="action.value">
-                        {{ action.label }}
-                    </mat-option>
-                </mat-select>
-            </mat-form-field>
+<!-- Filter & Search Bar -->
+<div class="toolbar">
+  <div class="filter-chips">
+    <button class="filter-chip" [class.active]="filter() === 'all'" (click)="setFilter('all')">
+      <span class="chip-label">Все</span>
+      <span class="chip-count">{{ wsService.totalCount() }}</span>
+    </button>
+    <button class="filter-chip android-chip" [class.active]="filter() === 'android'" (click)="setFilter('android')">
+      <mat-icon class="chip-icon">android</mat-icon>
+      <span class="chip-label">Android</span>
+      <span class="chip-count">{{ wsService.androidCount() }}</span>
+    </button>
+    <button class="filter-chip ios-chip" [class.active]="filter() === 'ios'" (click)="setFilter('ios')">
+      <mat-icon class="chip-icon">phone_iphone</mat-icon>
+      <span class="chip-label">iOS</span>
+      <span class="chip-count">{{ wsService.iosCount() }}</span>
+    </button>
+  </div>
 
-            <div class="action-row">
-                <ng-container [ngSwitch]="selectedAction">
-                    <div *ngSwitchCase="'install'" class="flex-grow">
-                        <label class="file-label">
-                            <button mat-stroked-button color="accent" type="button" (click)="fileInput.click()">
-                                <mat-icon>attach_file</mat-icon>
-                                <span>Файл</span>
-                            </button>
-                            <input #fileInput type="file" (change)="onFileSelected($event)" hidden>
-                            <span class="file-name" *ngIf="fileName">{{ fileName }}</span>
-                        </label>
-                    </div>
-                    <div *ngSwitchDefault class="flex-grow">
-                        <mat-form-field appearance="outline" class="full-width">
-                            <mat-label>Bundle ID</mat-label>
-                            <input matInput [(ngModel)]="bundleId" placeholder="Bundle ID">
-                        </mat-form-field>
-                    </div>
-                </ng-container>
-
-                <button mat-icon-button color="primary" class="go-btn" (click)="onGo(device.Info.UniqueDeviceID)">
-                    <mat-icon>play_arrow</mat-icon>
-                </button>
-            </div>
-        </div>
-        <div class="iphone18_5">
-            <div class="iphone-speaker"></div>
-            <div class="iphone-screen">
-                <div class="stream-wrapper">
-                    <img [src]="getStreamUrl(device)" #imgEl alt="Stream"
-                        (click)="onImageClick(device.Info.UniqueDeviceID, $event,imgEl)" />
-                </div>
-            </div>
-            <div class="iphone-home"></div>
-        </div>
-    </div>
-
+  <div class="search-box">
+    <mat-icon class="search-icon">search</mat-icon>
+    <input
+      class="search-input"
+      type="text"
+      placeholder="Поиск по серийному номеру или модели..."
+      [value]="search()"
+      (input)="onSearchChange($any($event.target).value)"
+    />
+    @if (search()) {
+      <button class="clear-search" (click)="onSearchChange('')">
+        <mat-icon>close</mat-icon>
+      </button>
     }
+  </div>
+</div>
+
+<!-- Empty State -->
+@if (wsService.totalCount() === 0) {
+  <div class="empty-state">
+    <mat-icon class="empty-icon">devices</mat-icon>
+    <div class="empty-title">Нет устройств</div>
+    <div class="empty-subtitle">Устройства появятся здесь при подключении к hub-server</div>
+  </div>
+} @else if (filteredDevices().length === 0) {
+  <div class="empty-state">
+    <mat-icon class="empty-icon">search_off</mat-icon>
+    <div class="empty-title">Ничего не найдено</div>
+    <div class="empty-subtitle">Попробуйте изменить фильтр или поисковый запрос</div>
+  </div>
+}
+
+<!-- Device Grid -->
+<div class="devices-grid">
+  @for (device of filteredDevices(); track trackBySerial($index, device)) {
+    <div class="device-card" [class.disabled-card]="device.disabled">
+
+      <!-- Card Header -->
+      <div class="card-header">
+        <div class="platform-badge" [class.android-badge]="device.type === 'android'" [class.ios-badge]="device.type === 'ios'">
+          <mat-icon>{{ device.type === 'android' ? 'android' : 'phone_iphone' }}</mat-icon>
+        </div>
+        <div class="device-title">
+          <div class="device-name" [title]="getDeviceName(device)">{{ getDeviceName(device) }}</div>
+          <div class="device-serial" [title]="device.serial">{{ device.serial }}</div>
+        </div>
+        <div class="status-badge {{ getStatusClass(device) }}">
+          {{ getStatusLabel(device) }}
+        </div>
+      </div>
+
+      <!-- Info Section -->
+      <div class="card-body">
+        @if (getOsVersion(device)) {
+          <div class="info-row">
+            <mat-icon class="info-icon">system_update</mat-icon>
+            <span>{{ getOsVersion(device) }}</span>
+          </div>
+        }
+
+        @if (device.containerStatus && device.containerStatus.state) {
+          <div class="info-row">
+            <mat-icon class="info-icon">dns</mat-icon>
+            <span class="container-state" [class.state-running]="device.containerStatus?.state === 'Running'"
+                  [class.state-error]="device.containerStatus?.state === 'Failed' || device.containerStatus?.state === 'Error'"
+                  [class.state-pending]="device.containerStatus?.state === 'Pending'">
+              {{ device.containerStatus?.state }}
+              @if (device.containerStatus?.reason) {
+                <span class="state-reason"> · {{ device.containerStatus?.reason }}</span>
+              }
+            </span>
+          </div>
+        }
+
+        <!-- Battery -->
+        @if (getBatteryLevel(device) !== null) {
+          <div class="battery-row">
+            <mat-icon class="info-icon" [style.color]="getBatteryColor(getBatteryLevel(device)!)">
+              {{ getBatteryLevel(device)! >= 80 ? 'battery_full' : getBatteryLevel(device)! >= 40 ? 'battery_3_bar' : getBatteryLevel(device)! >= 15 ? 'battery_1_bar' : 'battery_alert' }}
+            </mat-icon>
+            <div class="battery-bar-wrap">
+              <div class="battery-bar">
+                <div class="battery-fill"
+                     [style.width.%]="getBatteryLevel(device)"
+                     [style.background-color]="getBatteryColor(getBatteryLevel(device)!)">
+                </div>
+              </div>
+              <span class="battery-text">{{ getBatteryLevel(device) }}%</span>
+            </div>
+            @if (getBatteryTemp(device) !== null) {
+              <span class="battery-temp">{{ getBatteryTemp(device) }}°C</span>
+            }
+          </div>
+        }
+
+        @if (device.disabled) {
+          <div class="disabled-banner">
+            <mat-icon>block</mat-icon>
+            <span>Устройство отключено</span>
+          </div>
+        }
+
+        @if (device.Status === 'error' && device.StatusMsg) {
+          <div class="error-msg" [title]="device.StatusMsg">
+            <mat-icon class="error-icon">error_outline</mat-icon>
+            <span>{{ device.StatusMsg }}</span>
+          </div>
+        }
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="card-footer">
+        <button mat-icon-button class="action-btn screen-btn"
+                matTooltip="Экран устройства"
+                (click)="openScreen(device)">
+          <mat-icon>videocam</mat-icon>
+        </button>
+
+        <button mat-icon-button class="action-btn logs-btn"
+                matTooltip="Логи"
+                (click)="openLogs(device)">
+          <mat-icon>terminal</mat-icon>
+        </button>
+
+        <button mat-icon-button class="action-btn restart-btn"
+                matTooltip="Перезапустить контейнер"
+                [disabled]="isPending(device.serial)"
+                (click)="restartContainer(device)">
+          @if (isPending(device.serial)) {
+            <mat-icon class="spinning">refresh</mat-icon>
+          } @else {
+            <mat-icon>refresh</mat-icon>
+          }
+        </button>
+
+        <button mat-icon-button class="action-btn"
+                [class.disable-btn]="!device.disabled"
+                [class.enable-btn]="device.disabled"
+                [matTooltip]="device.disabled ? 'Включить устройство' : 'Отключить устройство'"
+                [disabled]="isPending(device.serial)"
+                (click)="toggleDisable(device)">
+          <mat-icon>{{ device.disabled ? 'power' : 'power_off' }}</mat-icon>
+        </button>
+      </div>
+
+    </div>
+  }
 </div>

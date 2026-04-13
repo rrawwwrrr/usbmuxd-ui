@@ -1,15 +1,84 @@
-/* You can add global styles to this file, and also import other style files */
-
 @use '@angular/material' as mat;
-// @include mat.core();
+
 html {
   @include mat.theme((
-    color: mat.$violet-palette,
-    density: -5,
+    color: (
+      theme-type: dark,
+      primary: mat.$violet-palette,
+      tertiary: mat.$azure-palette,
+    ),
+    typography: Roboto,
+    density: 0,
   ));
 }
 
 body {
-    margin: 0;
-    font-family: Roboto, "Helvetica Neue", sans-serif;
+  margin: 0;
+  background-color: #0d0d14;
+  color: rgba(255, 255, 255, 0.87);
+  font-family: Roboto, 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+// ─── Scrollbar ────────────────────────────────────────────────────────────────
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.25);
+  }
+}
+
+// ─── Material Overrides ───────────────────────────────────────────────────────
+
+// Dialog dark background
+.dark-dialog {
+  .mat-mdc-dialog-container {
+    --mdc-dialog-container-color: #16161f;
+    --mdc-dialog-container-shape: 12px;
+  }
+
+  // Screen dialog: убираем внутренние отступы, даём высоту
+  &.screen-dialog {
+    .mat-mdc-dialog-container {
+      --mdc-dialog-container-color: #0a0a0f;
+      padding: 0;
+    }
+    .mdc-dialog__surface {
+      overflow: hidden;
+    }
+    mat-dialog-content, .mat-mdc-dialog-content {
+      padding: 0 !important;
+      max-height: none !important;
+      height: 100%;
+    }
+  }
+}
+
+.mat-mdc-snack-bar-container {
+  --mdc-snackbar-container-color: #2a2a3a;
+  --mdc-snackbar-supporting-text-color: rgba(255, 255, 255, 0.87);
+}
+
+// Smooth icon rendering
+mat-icon,
+.mat-icon {
+  font-feature-settings: 'liga';
+  -webkit-font-feature-settings: 'liga';
+  user-select: none;
 }

@@ -1,0 +1,120 @@
+.dialog-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  padding: 16px 24px 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+
+  .title-icon {
+    color: var(--mat-sys-primary);
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+
+  .serial-hint {
+    font-size: 12px;
+    font-weight: 400;
+    opacity: 0.5;
+    margin-left: 4px;
+    font-family: 'Roboto Mono', monospace;
+  }
+}
+
+.dialog-content {
+  padding: 0 !important;
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  .logs-tabs {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  ::ng-deep .mat-mdc-tab-body-wrapper {
+    flex: 1;
+    overflow: hidden;
+  }
+
+  ::ng-deep .mat-mdc-tab-body-content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+  }
+}
+
+.tab-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  margin-right: 4px;
+}
+
+.log-toolbar {
+  display: flex;
+  align-items: center;
+  padding: 4px 8px;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  min-height: 40px;
+
+  .spacer {
+    flex: 1;
+  }
+
+  .error-hint {
+    font-size: 12px;
+    color: var(--mat-sys-error);
+    opacity: 0.8;
+  }
+
+  .active-btn {
+    color: var(--mat-sys-primary) !important;
+  }
+}
+
+.log-output {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 16px;
+  background: #0a0a0f;
+  font-family: 'Roboto Mono', 'Courier New', monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  min-height: 400px;
+  max-height: 60vh;
+
+  .log-line {
+    white-space: pre-wrap;
+    word-break: break-all;
+    color: #c0c0d0;
+    padding: 1px 0;
+
+    &.log-error {
+      color: #ff6b6b;
+    }
+
+    &.log-warn {
+      color: #ffd93d;
+    }
+
+    &.log-info {
+      color: #6bcb77;
+    }
+  }
+
+  .log-empty {
+    color: rgba(255, 255, 255, 0.3);
+    font-style: italic;
+    padding: 16px 0;
+    text-align: center;
+  }
+}
