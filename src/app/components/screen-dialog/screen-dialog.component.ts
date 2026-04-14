@@ -167,7 +167,7 @@ export class ScreenDialogComponent implements OnInit, AfterViewInit, OnDestroy {
   private sendTap(clientX: number, clientY: number): void {
     const { x, y } = this.imgToDevice(clientX, clientY);
     if (this.device.type === 'android') {
-      this.hubService.sendAction(this.device.serial, { x1: x, y1: y, x2: x, y2: y, duration: 100 }).subscribe();
+      this.hubService.sendAction(this.device.serial, { x1: x, y1: y }).subscribe();
     } else if (this.wdaSessionId) {
       this.hubService.sendWdaTap(this.device.serial, this.wdaSessionId, x, y).subscribe();
     }
