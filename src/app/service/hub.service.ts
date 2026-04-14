@@ -142,6 +142,10 @@ export class HubService {
     return `${proto}://${location.host}${this.base}/ws/${serial}/logs`;
   }
 
+  getMjpegUrl(serial: string): string {
+    return `${this.base}/device/${serial}/screenstream`;
+  }
+
   getMjpegWsUrl(serial: string): string {
     const proto = location.protocol === 'https:' ? 'wss' : 'ws';
     return `${proto}://${location.host}${this.base}/ws/${serial}/mjpeg`;

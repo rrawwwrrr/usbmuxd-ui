@@ -1,20 +1,18 @@
 <div class="screen-wrapper">
 
-  <!-- Left: stream canvas -->
+  <!-- Left: stream -->
   <div class="canvas-area">
 
-    <!-- Header inside canvas-area -->
     <div class="stream-header">
       <div class="device-info">
         <mat-icon class="platform-icon" [class.android]="isAndroid" [class.ios]="isIos">
           {{ isAndroid ? 'android' : 'phone_iphone' }}
         </mat-icon>
-        <span class="device-name">{{ device.Info?.model || device.Info?.DeviceName || device.serial }}</span>
+        <span class="device-name">{{ device.Info?.['model'] || device.Info?.['DeviceName'] || device.serial }}</span>
         <span class="serial">{{ device.serial }}</span>
       </div>
       <div class="stream-meta">
         @if (connected()) {
-          <span class="fps-badge">{{ fps() }} fps</span>
           <span class="live-dot"></span>
         }
         @if (!connected() && !loading()) {
@@ -23,14 +21,16 @@
       </div>
     </div>
 
-    <!-- Canvas container -->
-    <div class="canvas-container" [class.no-interact]="!canInteract">
+    <!-- Stream container -->
+    <div class="stream-container" [class.interactive]="canInteract">
+
       @if (loading()) {
         <div class="stream-overlay">
           <mat-spinner diameter="40" />
           <span>Подключение к стриму...</span>
         </div>
       }
+
       @if (error() && !loading()) {
         <div class="stream-overlay error">
           <mat-icon>signal_disconnected</mat-icon>
@@ -38,18 +38,22 @@
         </div>
       }
 
-      <canvas
-        #streamCanvas
-        class="stream-canvas"
+      <!-- MJPEG img — браузер нативно рендерит multipart/x-mixed-replace -->
+      <img
+        #streamImg
+        class="stream-img"
+        [src]="streamUrl"
         [class.interactive]="canInteract"
-        [attr.title]="canInteract ? 'Клик — тап, потяни — свайп' : (isIos && !wdaReady() ? 'WDA не готов' : '')"
+        (load)="onImgLoad()"
+        (error)="onImgError()"
         (pointerdown)="onPointerDown($event)"
         (pointerup)="onPointerUp($event)"
         (pointercancel)="onPointerCancel()"
-      ></canvas>
+        draggable="false"
+        alt=""
+      />
     </div>
 
-    <!-- iOS WDA status -->
     @if (isIos && !wdaReady() && !loading()) {
       <div class="wda-hint">
         <mat-icon>info_outline</mat-icon>
@@ -61,14 +65,12 @@
   <!-- Right: hardware buttons -->
   <div class="controls-panel">
 
-    <!-- Close button at top -->
     <button mat-icon-button class="close-btn" matTooltip="Закрыть" (click)="dialogRef.close()">
       <mat-icon>close</mat-icon>
     </button>
 
     <div class="buttons-group">
 
-      <!-- Home -->
       <button mat-icon-button class="hw-btn home-btn"
               matTooltip="Домой"
               [disabled]="!canInteract"
@@ -76,7 +78,6 @@
         <mat-icon>home</mat-icon>
       </button>
 
-      <!-- Back (Android only) -->
       @if (isAndroid) {
         <button mat-icon-button class="hw-btn"
                 matTooltip="Назад"
@@ -95,7 +96,6 @@
 
       <div class="divider"></div>
 
-      <!-- Volume -->
       <button mat-icon-button class="hw-btn"
               matTooltip="Громкость +"
               [disabled]="!canInteract"
@@ -112,7 +112,6 @@
 
       <div class="divider"></div>
 
-      <!-- Lock -->
       <button mat-icon-button class="hw-btn lock-btn"
               matTooltip="Заблокировать"
               [disabled]="!canInteract"
