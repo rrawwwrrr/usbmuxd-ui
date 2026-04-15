@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { Device } from '../model/device.model';
 
 export interface ScreenSize {
@@ -88,6 +89,12 @@ export class HubService {
 
   deleteWdaSession(serial: string, sessionId: string): Observable<any> {
     return this.http.delete(`${this.base}/wda/${serial}/session/${sessionId}`);
+  }
+
+  getWdaScreenSize(serial: string, sessionId: string): Observable<ScreenSize> {
+    return this.http.get<{ value: { width: number; height: number } }>(
+      `${this.base}/wda/${serial}/session/${sessionId}/window/size`
+    ).pipe(map(r => ({ width: r.value.width, height: r.value.height })));
   }
 
   sendWdaTap(serial: string, sessionId: string, x: number, y: number): Observable<any> {
