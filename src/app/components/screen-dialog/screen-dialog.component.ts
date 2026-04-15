@@ -45,9 +45,9 @@ export class ScreenDialogComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly error = signal('');
   readonly connected = signal(false);
 
-  // Device screen dimensions (actual pixels, read from img)
-  screenWidth = 0;
-  screenHeight = 0;
+  // Device screen dimensions — реальные пиксели устройства (не minicap-фрейм)
+  deviceWidth = 0;
+  deviceHeight = 0;
 
   streamUrl = '';
 
@@ -69,7 +69,12 @@ export class ScreenDialogComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnInit(): void {
     this.streamUrl = this.hubService.getMjpegUrl(this.device.serial);
-    if (this.device.type === 'ios') {
+    if (this.device.type === 'android') {
+      this.hubService.getScreenSize(this.device.serial).subscribe({
+        next: (s) => { this.deviceWidth = s.width; this.deviceHeight = s.height; },
+        error: () => {},
+      });
+    } else if (this.device.type === 'ios') {
       this.initWdaSession();
     }
   }
@@ -91,11 +96,6 @@ export class ScreenDialogComponent implements OnInit, AfterViewInit, OnDestroy {
       this.loading.set(false);
       this.connected.set(true);
       this.error.set('');
-      const img = this.imgRef?.nativeElement;
-      if (img) {
-        this.screenWidth = img.naturalWidth || img.width;
-        this.screenHeight = img.naturalHeight || img.height;
-      }
     });
   }
 
@@ -126,8 +126,9 @@ export class ScreenDialogComponent implements OnInit, AfterViewInit, OnDestroy {
     const rect = img.getBoundingClientRect();
     const relX = clientX - rect.left;
     const relY = clientY - rect.top;
-    const scaleX = (this.screenWidth || img.naturalWidth || 1080) / rect.width;
-    const scaleY = (this.screenHeight || img.naturalHeight || 1920) / rect.height;
+    // Используем реальное разрешение устройства (не minicap-фрейм, который может быть уменьшен)
+    const scaleX = (this.deviceWidth || 1080) / rect.width;
+    const scaleY = (this.deviceHeight || 1920) / rect.height;
     return {
       x: Math.round(relX * scaleX),
       y: Math.round(relY * scaleY),
