@@ -44,16 +44,14 @@ export class ScreenDialogComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly loading = signal(true);
   readonly error = signal('');
   readonly connected = signal(false);
+  readonly wdaReady = signal(false);
 
-  // Device screen dimensions — реальные пиксели устройства (не minicap-фрейм)
   deviceWidth = 0;
   deviceHeight = 0;
-
   streamUrl = '';
 
-  // iOS WDA
-  wdaSessionId: string | null = null;
-  readonly wdaReady = signal(false);
+  private wdaWs: WebSocket | null = null;
+  private wdaReconnectTimer: ReturnType<typeof setTimeout> | null = null;
 
   private dragStart: DragStart | null = null;
   private readonly SWIPE_THRESHOLD = 10;
@@ -75,20 +73,17 @@ export class ScreenDialogComponent implements OnInit, AfterViewInit, OnDestroy {
         error: () => {},
       });
     } else if (this.device.type === 'ios') {
-      this.initWdaSession();
+      this.connectWdaWs();
     }
   }
 
   ngAfterViewInit(): void {}
 
   ngOnDestroy(): void {
-    // Stop stream by clearing src
     if (this.imgRef?.nativeElement) {
       this.imgRef.nativeElement.src = '';
     }
-    if (this.wdaSessionId && this.device.type === 'ios') {
-      this.hubService.deleteWdaSession(this.device.serial, this.wdaSessionId).subscribe();
-    }
+    this.closeWdaWs();
   }
 
   onImgLoad(): void {
@@ -107,22 +102,50 @@ export class ScreenDialogComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  // ─── iOS WDA session ─────────────────────────────────────────────────────────
+  // ─── WDA WebSocket ───────────────────────────────────────────────────────────
 
-  private initWdaSession(): void {
-    this.hubService.createWdaSession(this.device.serial).subscribe({
-      next: (res) => {
-        this.wdaSessionId = res?.sessionId ?? res?.value?.sessionId ?? null;
-        this.wdaReady.set(!!this.wdaSessionId);
-        if (this.wdaSessionId) {
-          this.hubService.getWdaScreenSize(this.device.serial, this.wdaSessionId).subscribe({
-            next: (s) => { this.deviceWidth = s.width; this.deviceHeight = s.height; },
-            error: () => {},
-          });
+  private connectWdaWs(): void {
+    const url = this.hubService.getWdaWsUrl(this.device.serial);
+    this.wdaWs = new WebSocket(url);
+
+    this.wdaWs.onmessage = (event) => {
+      try {
+        const msg = JSON.parse(event.data);
+        if (msg.type === 'session' && msg.sessionId) {
+          this.zone.run(() => this.wdaReady.set(true));
         }
-      },
-      error: () => {},
-    });
+      } catch {}
+    };
+
+    this.wdaWs.onclose = () => {
+      this.zone.run(() => this.wdaReady.set(false));
+      this.scheduleWdaReconnect();
+    };
+
+    this.wdaWs.onerror = () => {
+      this.zone.run(() => this.wdaReady.set(false));
+    };
+  }
+
+  private scheduleWdaReconnect(): void {
+    if (this.wdaReconnectTimer || !this.dialogRef) return;
+    this.wdaReconnectTimer = setTimeout(() => {
+      this.wdaReconnectTimer = null;
+      this.connectWdaWs();
+    }, 5000);
+  }
+
+  private closeWdaWs(): void {
+    if (this.wdaReconnectTimer) {
+      clearTimeout(this.wdaReconnectTimer);
+      this.wdaReconnectTimer = null;
+    }
+    if (this.wdaWs) {
+      this.wdaWs.onclose = null;
+      this.wdaWs.close();
+      this.wdaWs = null;
+    }
+    this.wdaReady.set(false);
   }
 
   // ─── Coordinate mapping ──────────────────────────────────────────────────────
@@ -130,14 +153,11 @@ export class ScreenDialogComponent implements OnInit, AfterViewInit, OnDestroy {
   private imgToDevice(clientX: number, clientY: number): { x: number; y: number } {
     const img = this.imgRef.nativeElement;
     const rect = img.getBoundingClientRect();
-    const relX = clientX - rect.left;
-    const relY = clientY - rect.top;
-    // Используем реальное разрешение устройства (не minicap-фрейм, который может быть уменьшен)
     const scaleX = (this.deviceWidth || 1080) / rect.width;
     const scaleY = (this.deviceHeight || 1920) / rect.height;
     return {
-      x: Math.round(relX * scaleX),
-      y: Math.round(relY * scaleY),
+      x: Math.round((clientX - rect.left) * scaleX),
+      y: Math.round((clientY - rect.top) * scaleY),
     };
   }
 
@@ -175,8 +195,8 @@ export class ScreenDialogComponent implements OnInit, AfterViewInit, OnDestroy {
     const { x, y } = this.imgToDevice(clientX, clientY);
     if (this.device.type === 'android') {
       this.hubService.sendAction(this.device.serial, { x1: x, y1: y, x2: x, y2: y, duration: 100 }).subscribe();
-    } else if (this.wdaSessionId) {
-      this.hubService.sendWdaTap(this.device.serial, this.wdaSessionId, x, y).subscribe();
+    } else {
+      this.hubService.sendWdaTap(this.device.serial, x, y).subscribe();
     }
   }
 
@@ -189,11 +209,8 @@ export class ScreenDialogComponent implements OnInit, AfterViewInit, OnDestroy {
       this.hubService.sendAction(this.device.serial, {
         x1: start.x, y1: start.y, x2: end.x, y2: end.y, duration: dur,
       }).subscribe();
-    } else if (this.wdaSessionId) {
-      this.hubService.sendWdaSwipe(
-        this.device.serial, this.wdaSessionId,
-        start.x, start.y, end.x, end.y, dur,
-      ).subscribe();
+    } else {
+      this.hubService.sendWdaSwipe(this.device.serial, start.x, start.y, end.x, end.y, dur).subscribe();
     }
   }
 
@@ -202,20 +219,41 @@ export class ScreenDialogComponent implements OnInit, AfterViewInit, OnDestroy {
   pressHome(): void {
     if (this.device.type === 'android') {
       this.hubService.pressHome(this.device.serial).subscribe();
-    } else if (this.wdaSessionId) {
-      this.hubService.wdaPressHome(this.device.serial, this.wdaSessionId).subscribe();
+    } else {
+      this.hubService.wdaPressHome(this.device.serial).subscribe();
     }
   }
 
   pressBack(): void { this.hubService.pressBack(this.device.serial).subscribe(); }
   pressMultitask(): void { this.hubService.pressMultitask(this.device.serial).subscribe(); }
-  pressLock(): void { this.hubService.pressLock(this.device.serial).subscribe(); }
-  volumeUp(): void { this.hubService.volumeUp(this.device.serial).subscribe(); }
-  volumeDown(): void { this.hubService.volumeDown(this.device.serial).subscribe(); }
+
+  pressLock(): void {
+    if (this.device.type === 'android') {
+      this.hubService.pressLock(this.device.serial).subscribe();
+    } else {
+      this.hubService.wdaToggleLock(this.device.serial).subscribe();
+    }
+  }
+
+  volumeUp(): void {
+    if (this.device.type === 'android') {
+      this.hubService.volumeUp(this.device.serial).subscribe();
+    } else {
+      this.hubService.wdaVolumeUp(this.device.serial).subscribe();
+    }
+  }
+
+  volumeDown(): void {
+    if (this.device.type === 'android') {
+      this.hubService.volumeDown(this.device.serial).subscribe();
+    } else {
+      this.hubService.wdaVolumeDown(this.device.serial).subscribe();
+    }
+  }
 
   get isAndroid(): boolean { return this.device.type === 'android'; }
   get isIos(): boolean { return this.device.type === 'ios'; }
   get canInteract(): boolean {
-    return this.connected() && (this.isAndroid || !!this.wdaSessionId);
+    return this.connected() && (this.isAndroid || this.wdaReady());
   }
 }

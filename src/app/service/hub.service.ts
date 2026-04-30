@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
 import { Device } from '../model/device.model';
 
 export interface ScreenSize {
@@ -15,12 +14,6 @@ export interface AndroidAction {
   x2?: number;
   y2?: number;
   duration?: number;
-}
-
-export interface WdaSession {
-  sessionId?: string;
-  value?: { sessionId?: string; [key: string]: any };
-  [key: string]: any;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -83,22 +76,13 @@ export class HubService {
 
   // ─── iOS WDA ───────────────────────────────────────────────────────────────
 
-  createWdaSession(serial: string): Observable<WdaSession> {
-    return this.http.post<WdaSession>(`${this.base}/wda/${serial}/session`, { capabilities: {} });
+  getWdaWsUrl(serial: string): string {
+    const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+    return `${proto}://${location.host}${this.base}/ws/${serial}/wda`;
   }
 
-  deleteWdaSession(serial: string, sessionId: string): Observable<any> {
-    return this.http.delete(`${this.base}/wda/${serial}/session/${sessionId}`);
-  }
-
-  getWdaScreenSize(serial: string, sessionId: string): Observable<ScreenSize> {
-    return this.http.get<{ value: { width: number; height: number } }>(
-      `${this.base}/wda/${serial}/session/${sessionId}/window/size`
-    ).pipe(map(r => ({ width: r.value.width, height: r.value.height })));
-  }
-
-  sendWdaTap(serial: string, sessionId: string, x: number, y: number): Observable<any> {
-    const actions = {
+  sendWdaTap(serial: string, x: number, y: number): Observable<any> {
+    const body = {
       actions: [{
         type: 'pointer',
         id: 'finger1',
@@ -111,12 +95,11 @@ export class HubService {
         ],
       }],
     };
-    return this.http.post(`${this.base}/wda/${serial}/session/${sessionId}/actions`, actions);
+    return this.http.post(`${this.base}/device/${serial}/wda/actions`, body);
   }
 
-  sendWdaSwipe(serial: string, sessionId: string,
-               x1: number, y1: number, x2: number, y2: number, duration = 500): Observable<any> {
-    const actions = {
+  sendWdaSwipe(serial: string, x1: number, y1: number, x2: number, y2: number, duration = 500): Observable<any> {
+    const body = {
       actions: [{
         type: 'pointer',
         id: 'finger1',
@@ -129,14 +112,27 @@ export class HubService {
         ],
       }],
     };
-    return this.http.post(`${this.base}/wda/${serial}/session/${sessionId}/actions`, actions);
+    return this.http.post(`${this.base}/device/${serial}/wda/actions`, body);
   }
 
-  wdaPressHome(serial: string, sessionId: string): Observable<any> {
-    return this.http.post(
-      `${this.base}/wda/${serial}/session/${sessionId}/wda/pressButton`,
-      { name: 'home' },
-    );
+  wdaPressHome(serial: string): Observable<any> {
+    return this.http.post(`${this.base}/device/${serial}/wda/homescreen`, {});
+  }
+
+  wdaVolumeUp(serial: string): Observable<any> {
+    return this.http.get(`${this.base}/device/${serial}/wda/volumeup`);
+  }
+
+  wdaVolumeDown(serial: string): Observable<any> {
+    return this.http.get(`${this.base}/device/${serial}/wda/volumedown`);
+  }
+
+  wdaToggleLock(serial: string): Observable<any> {
+    return this.http.post(`${this.base}/device/${serial}/wda/lock`, {});
+  }
+
+  wdaAppSwitcher(serial: string, body: object): Observable<any> {
+    return this.http.post(`${this.base}/device/${serial}/wda/appswitcher`, body);
   }
 
   // ─── Logs & Streams ────────────────────────────────────────────────────────
