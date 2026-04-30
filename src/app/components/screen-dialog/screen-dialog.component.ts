@@ -111,7 +111,7 @@ export class ScreenDialogComponent implements OnInit, AfterViewInit, OnDestroy {
     this.wdaWs.onmessage = (event) => {
       try {
         const msg = JSON.parse(event.data);
-        if (msg.type === 'session' && msg.sessionId) {
+        if (msg.type === 'connected') {
           this.zone.run(() => this.wdaReady.set(true));
         }
       } catch {}
