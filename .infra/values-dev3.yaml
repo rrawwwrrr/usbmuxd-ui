@@ -1,6 +1,5 @@
 image:
   repository: harbor.rnd.lanit.ru/public/hub-ui
-  tag: fix
 
 ingress:
   host: hub-ui.rrawww.ru

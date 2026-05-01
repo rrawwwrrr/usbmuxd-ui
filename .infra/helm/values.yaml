@@ -1,6 +1,5 @@
 image:
   repository: harbor.rnd.lanit.ru/public/hub-ui
-  tag: fix
   pullPolicy: Always
 
 imagePullSecrets:
