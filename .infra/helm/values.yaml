@@ -1,0 +1,25 @@
+image:
+  repository: harbor.rnd.lanit.ru/public/hub-ui
+  tag: fix
+  pullPolicy: Always
+
+imagePullSecrets:
+  - name: regcred
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 200m
+    memory: 128Mi
+
+service:
+  port: 80
+
+ingress:
+  enabled: true
+  className: nginx-internal
+  host: hub-ui.mfarm.rnd.lanit.ru
+
+pipeline: ""

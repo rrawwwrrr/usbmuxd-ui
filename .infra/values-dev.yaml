@@ -1,0 +1,8 @@
+image:
+  repository: harbor.rnd.lanit.ru/public/hub-ui
+  tag: fix
+
+ingress:
+  host: hub-ui.mfarm.rnd.lanit.ru
+
+pipeline: ${CI_PIPELINE_URL}
