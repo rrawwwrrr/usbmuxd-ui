@@ -2,6 +2,6 @@ image:
   repository: harbor.rnd.lanit.ru/public/hub-ui
 
 ingress:
-  host: hub-ui.rrawww.ru
+  host: hub.rrawww.ru
 
 pipeline: ${CI_PIPELINE_URL}
