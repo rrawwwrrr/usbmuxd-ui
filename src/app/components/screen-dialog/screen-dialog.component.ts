@@ -104,12 +104,11 @@ export class ScreenDialogComponent implements OnInit, AfterViewInit, OnDestroy {
     this.wdaWs.onmessage = (event) => {
       try {
         const msg = JSON.parse(event.data);
-        if (msg.type === 'connected') {
-          this.zone.run(() => this.wdaReady.set(true));
-        } else if (msg.type === 'screen_size' && msg.width && msg.height) {
+        if (msg.type === 'screen_size' && msg.width && msg.height) {
           this.zone.run(() => {
             this.deviceWidth = msg.width;
             this.deviceHeight = msg.height;
+            this.wdaReady.set(true);
           });
         }
       } catch {}
