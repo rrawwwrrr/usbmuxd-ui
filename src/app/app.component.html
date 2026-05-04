@@ -16,6 +16,14 @@
         {{ wsService.lastUpdate() | date:'HH:mm:ss' }}
       </span>
     }
+
+    <div class="user-info">
+      <mat-icon class="user-icon">account_circle</mat-icon>
+      <span class="username">{{ auth.username }}</span>
+      <button mat-icon-button matTooltip="Выйти" (click)="auth.logout()">
+        <mat-icon>logout</mat-icon>
+      </button>
+    </div>
   </div>
 </header>
 

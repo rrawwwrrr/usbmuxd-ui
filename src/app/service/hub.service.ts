@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Device } from '../model/device.model';
+import { AuthService } from './auth.service';
 
 export interface ScreenSize {
   width: number;
@@ -20,7 +21,7 @@ export interface AndroidAction {
 export class HubService {
   private readonly base = '/api/v1';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private auth: AuthService) {}
 
   // ─── Devices ───────────────────────────────────────────────────────────────
 
@@ -76,9 +77,15 @@ export class HubService {
 
   // ─── iOS WDA ───────────────────────────────────────────────────────────────
 
-  getWdaWsUrl(serial: string): string {
+  private wsUrl(path: string): string {
     const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-    return `${proto}://${location.host}${this.base}/ws/${serial}/session`;
+    const token = this.auth.token;
+    const query = token ? `?token=${encodeURIComponent(token)}` : '';
+    return `${proto}://${location.host}${path}${query}`;
+  }
+
+  getWdaWsUrl(serial: string): string {
+    return this.wsUrl(`${this.base}/ws/${serial}/session`);
   }
 
   sendWdaTap(serial: string, x: number, y: number): Observable<any> {
@@ -142,8 +149,7 @@ export class HubService {
   }
 
   getDeviceLogsWsUrl(serial: string): string {
-    const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-    return `${proto}://${location.host}${this.base}/ws/${serial}/logs`;
+    return this.wsUrl(`${this.base}/ws/${serial}/logs`);
   }
 
   getMjpegUrl(serial: string): string {
@@ -151,7 +157,6 @@ export class HubService {
   }
 
   getMjpegWsUrl(serial: string): string {
-    const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-    return `${proto}://${location.host}${this.base}/ws/${serial}/mjpeg`;
+    return this.wsUrl(`${this.base}/ws/${serial}/mjpeg`);
   }
 }

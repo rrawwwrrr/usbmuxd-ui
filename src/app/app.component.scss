@@ -92,6 +92,42 @@
   font-family: 'Roboto Mono', monospace;
 }
 
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-left: 12px;
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+
+  .user-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    color: rgba(255, 255, 255, 0.4);
+  }
+
+  .username {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.6);
+  }
+
+  button {
+    color: rgba(255, 255, 255, 0.35) !important;
+    width: 32px !important;
+    height: 32px !important;
+
+    &:hover {
+      color: rgba(255, 255, 255, 0.7) !important;
+    }
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+  }
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 .app-main {
