@@ -78,7 +78,7 @@ export class HubService {
 
   getWdaWsUrl(serial: string): string {
     const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-    return `${proto}://${location.host}${this.base}/ws/${serial}/wda`;
+    return `${proto}://${location.host}${this.base}/ws/${serial}/session`;
   }
 
   sendWdaTap(serial: string, x: number, y: number): Observable<any> {
