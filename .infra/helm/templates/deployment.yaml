@@ -24,6 +24,9 @@ spec:
       containers:
         - name: {{ .Release.Name }}
           image: "{{ .Values.image.repository }}"
+          env:
+          - name: DEPLOYMENT_TIMESTAMP
+            value: {{ now | unixEpoch | quote }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - containerPort: 80
