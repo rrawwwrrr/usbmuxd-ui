@@ -18,7 +18,7 @@ service:
 
 ingress:
   enabled: true
-  className: nginx-internal
+  className: nginx-external
   host: hub-ui.mfarm.rnd.lanit.ru
 
 pipeline: ""
