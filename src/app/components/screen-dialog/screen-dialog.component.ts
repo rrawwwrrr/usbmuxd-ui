@@ -67,14 +67,7 @@ export class ScreenDialogComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnInit(): void {
     this.streamUrl = this.hubService.getMjpegUrl(this.device.serial);
-    if (this.device.type === 'android') {
-      this.hubService.getScreenSize(this.device.serial).subscribe({
-        next: (s) => { this.deviceWidth = s.width; this.deviceHeight = s.height; },
-        error: () => {},
-      });
-    } else if (this.device.type === 'ios') {
-      this.connectWdaWs();
-    }
+    this.connectWdaWs();
   }
 
   ngAfterViewInit(): void {}
@@ -113,6 +106,11 @@ export class ScreenDialogComponent implements OnInit, AfterViewInit, OnDestroy {
         const msg = JSON.parse(event.data);
         if (msg.type === 'connected') {
           this.zone.run(() => this.wdaReady.set(true));
+        } else if (msg.type === 'screen_size' && msg.width && msg.height) {
+          this.zone.run(() => {
+            this.deviceWidth = msg.width;
+            this.deviceHeight = msg.height;
+          });
         }
       } catch {}
     };
