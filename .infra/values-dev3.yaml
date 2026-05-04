@@ -3,5 +3,5 @@ image:
 
 ingress:
   host: hub.rrawww.ru
-
+  className: nginx-external
 pipeline: ${CI_PIPELINE_URL}
