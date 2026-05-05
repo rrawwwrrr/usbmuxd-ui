@@ -98,7 +98,14 @@ export class ScreenDialogComponent implements OnInit, AfterViewInit, OnDestroy {
   // ─── WDA WebSocket ───────────────────────────────────────────────────────────
 
   private connectWdaWs(): void {
-    const url = this.hubService.getWdaWsUrl(this.device.serial);
+    this.hubService.getWsTicket().subscribe({
+      next: ({ ticket }) => this.openWdaWs(ticket),
+      error: () => this.scheduleWdaReconnect(),
+    });
+  }
+
+  private openWdaWs(ticket: string): void {
+    const url = this.hubService.getWdaWsUrl(this.device.serial, ticket);
     this.wdaWs = new WebSocket(url);
 
     this.wdaWs.onmessage = (event) => {

@@ -1,11 +1,11 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { Device, WsMessage } from '../model/device.model';
 import { Subject } from 'rxjs';
-import { AuthService } from './auth.service';
+import { HubService } from './hub.service';
 
 @Injectable({ providedIn: 'root' })
 export class HubWsService {
-  private readonly auth = inject(AuthService);
+  private readonly hubService = inject(HubService);
   private socket: WebSocket | null = null;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private readonly reconnectDelay = 3000;
@@ -24,10 +24,13 @@ export class HubWsService {
   readonly messages$ = new Subject<WsMessage>();
 
   connect(): void {
-    const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-    const token = this.auth.token;
-    const query = token ? `?token=${encodeURIComponent(token)}` : '';
-    this.connectTo(`${proto}://${location.host}/api/v1/devices/ws${query}`);
+    this.hubService.getWsTicket().subscribe({
+      next: ({ ticket }) => {
+        const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+        this.connectTo(`${proto}://${location.host}/api/v1/devices/ws?ticket=${encodeURIComponent(ticket)}`);
+      },
+      error: () => this.scheduleReconnect(''),
+    });
   }
 
   private connectTo(url: string): void {
@@ -66,11 +69,11 @@ export class HubWsService {
     }
   }
 
-  private scheduleReconnect(url: string): void {
+  private scheduleReconnect(_url: string): void {
     if (!this.reconnectTimer) {
       this.reconnectTimer = setTimeout(() => {
         this.reconnectTimer = null;
-        this.connectTo(url);
+        this.connect();
       }, this.reconnectDelay);
     }
   }

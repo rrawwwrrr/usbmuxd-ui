@@ -77,15 +77,17 @@ export class HubService {
 
   // ─── iOS WDA ───────────────────────────────────────────────────────────────
 
-  private wsUrl(path: string): string {
-    const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-    const token = this.auth.token;
-    const query = token ? `?token=${encodeURIComponent(token)}` : '';
-    return `${proto}://${location.host}${path}${query}`;
+  getWsTicket(): Observable<{ ticket: string }> {
+    return this.http.get<{ ticket: string }>(`${this.base}/ws-ticket`);
   }
 
-  getWdaWsUrl(serial: string): string {
-    return this.wsUrl(`${this.base}/ws/${serial}/session`);
+  private wsUrl(path: string, ticket: string): string {
+    const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+    return `${proto}://${location.host}${path}?ticket=${encodeURIComponent(ticket)}`;
+  }
+
+  getWdaWsUrl(serial: string, ticket: string): string {
+    return this.wsUrl(`${this.base}/ws/${serial}/session`, ticket);
   }
 
   sendWdaTap(serial: string, x: number, y: number): Observable<any> {
@@ -148,15 +150,15 @@ export class HubService {
     return `${this.base}/devices/log/${serial}`;
   }
 
-  getDeviceLogsWsUrl(serial: string): string {
-    return this.wsUrl(`${this.base}/ws/${serial}/logs`);
+  getDeviceLogsWsUrl(serial: string, ticket: string): string {
+    return this.wsUrl(`${this.base}/ws/${serial}/logs`, ticket);
   }
 
   getMjpegUrl(serial: string): string {
     return `${this.base}/device/${serial}/screenstream`;
   }
 
-  getMjpegWsUrl(serial: string): string {
-    return this.wsUrl(`${this.base}/ws/${serial}/mjpeg`);
+  getMjpegWsUrl(serial: string, ticket: string): string {
+    return this.wsUrl(`${this.base}/ws/${serial}/mjpeg`, ticket);
   }
 }
