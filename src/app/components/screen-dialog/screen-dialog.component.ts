@@ -49,6 +49,7 @@ export class ScreenDialogComponent implements OnInit, AfterViewInit, OnDestroy {
   deviceWidth = 0;
   deviceHeight = 0;
   streamUrl = '';
+  orientation = signal<'portrait' | 'landscape'>('portrait');
 
   private wdaWs: WebSocket | null = null;
   private wdaReconnectTimer: ReturnType<typeof setTimeout> | null = null;
@@ -130,6 +131,9 @@ export class ScreenDialogComponent implements OnInit, AfterViewInit, OnDestroy {
             this.deviceHeight = msg.height;
             this.wdaReady.set(true);
           });
+        } else if (msg.type === 'orientation') {
+          const isLandscape = msg.orientation === 'LANDSCAPE' || msg.orientation === 'REVERSE_LANDSCAPE';
+          this.zone.run(() => this.orientation.set(isLandscape ? 'landscape' : 'portrait'));
         }
       } catch {}
     };

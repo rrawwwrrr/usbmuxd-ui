@@ -22,7 +22,7 @@
     </div>
 
     <!-- Stream container -->
-    <div class="stream-container" [class.interactive]="canInteract">
+    <div class="stream-container" [class.interactive]="canInteract" [class.landscape]="orientation() === 'landscape'">
 
       @if (loading()) {
         <div class="stream-overlay">
