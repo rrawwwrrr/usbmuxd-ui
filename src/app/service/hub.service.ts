@@ -146,16 +146,16 @@ export class HubService {
 
   // ─── Logs & Streams ────────────────────────────────────────────────────────
 
-  getContainerLogsUrl(serial: string): string {
-    return `${this.base}/devices/log/${serial}`;
+  getContainerLogsUrl(serial: string, ticket: string): string {
+    return `${this.base}/devices/log/${serial}?ticket=${encodeURIComponent(ticket)}`;
   }
 
   getDeviceLogsWsUrl(serial: string, ticket: string): string {
     return this.wsUrl(`${this.base}/ws/${serial}/logs`, ticket);
   }
 
-  getMjpegUrl(serial: string): string {
-    return `${this.base}/device/${serial}/screenstream`;
+  getMjpegUrl(serial: string, ticket: string): string {
+    return `${this.base}/device/${serial}/screenstream?ticket=${encodeURIComponent(ticket)}`;
   }
 
   getMjpegWsUrl(serial: string, ticket: string): string {

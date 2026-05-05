@@ -70,7 +70,14 @@ export class LogsDialogComponent implements OnInit, OnDestroy {
   }
 
   private connectContainerLogs(): void {
-    const url = this.hubService.getContainerLogsUrl(this.data.device.serial);
+    this.hubService.getWsTicket().subscribe({
+      next: ({ ticket }) => this.openContainerLogsEs(ticket),
+      error: () => this.containerLogsError.set('Ошибка получения тикета'),
+    });
+  }
+
+  private openContainerLogsEs(ticket: string): void {
+    const url = this.hubService.getContainerLogsUrl(this.data.device.serial, ticket);
     try {
       this.eventSource = new EventSource(url);
       this.eventSource.onmessage = (e) => {

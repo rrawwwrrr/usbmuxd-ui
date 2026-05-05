@@ -66,8 +66,21 @@ export class ScreenDialogComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.streamUrl = this.hubService.getMjpegUrl(this.device.serial);
+    this.connectStream();
     this.connectWdaWs();
+  }
+
+  private connectStream(): void {
+    this.hubService.getWsTicket().subscribe({
+      next: ({ ticket }) => {
+        this.zone.run(() => {
+          this.streamUrl = this.hubService.getMjpegUrl(this.device.serial, ticket);
+        });
+      },
+      error: () => {
+        this.zone.run(() => this.error.set('Ошибка получения тикета для стрима'));
+      },
+    });
   }
 
   ngAfterViewInit(): void {}
