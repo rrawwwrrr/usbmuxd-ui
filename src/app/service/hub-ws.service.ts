@@ -1,9 +1,11 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, computed, inject } from '@angular/core';
 import { Device, WsMessage } from '../model/device.model';
 import { Subject } from 'rxjs';
+import { AuthService } from './auth.service';
 
 @Injectable({ providedIn: 'root' })
 export class HubWsService {
+  private readonly auth = inject(AuthService);
   private socket: WebSocket | null = null;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private readonly reconnectDelay = 3000;
@@ -23,7 +25,9 @@ export class HubWsService {
 
   connect(): void {
     const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-    this.connectTo(`${proto}://${location.host}/api/v1/devices/ws`);
+    const token = this.auth.token;
+    const query = token ? `?token=${encodeURIComponent(token)}` : '';
+    this.connectTo(`${proto}://${location.host}/api/v1/devices/ws${query}`);
   }
 
   private connectTo(url: string): void {
