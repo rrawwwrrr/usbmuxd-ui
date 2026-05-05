@@ -88,7 +88,14 @@ export class LogsDialogComponent implements OnInit, OnDestroy {
   }
 
   private connectDeviceLogs(): void {
-    const url = this.hubService.getDeviceLogsWsUrl(this.data.device.serial);
+    this.hubService.getWsTicket().subscribe({
+      next: ({ ticket }) => this.openDeviceLogsWs(ticket),
+      error: () => this.deviceLogsError.set('Ошибка получения тикета'),
+    });
+  }
+
+  private openDeviceLogsWs(ticket: string): void {
+    const url = this.hubService.getDeviceLogsWsUrl(this.data.device.serial, ticket);
     try {
       this.logsWs = new WebSocket(url);
       this.logsWs.onmessage = (e) => {
